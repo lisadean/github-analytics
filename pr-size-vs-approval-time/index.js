@@ -1,15 +1,17 @@
 const { Octokit } = require('@octokit/rest');
-const octokit = new Octokit({ auth: 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN' });
+const octokit = new Octokit({ auth: process.env.NPM_TOKEN });
 
-const owner = 'OWNER';
-const repo = 'REPO';
+const maxPRs = 20;
+
+const owner = 'buildcom';
+const repo = 'react-build-store';
 
 async function getMergedPRs(owner, repo) {
   try {
     const mergedPRs = [];
     let page = 1;
 
-    while (true) {
+    while (mergedPRs.length < maxPRs) {
       const { data: pullRequests } = await octokit.pulls.list({
         owner,
         repo,
@@ -74,9 +76,13 @@ async function getPRReviewTimes(owner, repo, pr) {
       if (times.approvedAt) {
         const timeToApproval = (times.approvedAt - times.openedAt) / 1000;
         const timeToMerge = (times.mergedAt - times.approvedAt) / 1000;
-        console.log(`PR #${pr.number}: Opened at ${times.openedAt}, approved in ${timeToApproval} seconds, merged in ${timeToMerge} seconds`);
+        console.log(
+          `PR #${pr.number}: Opened at ${times.openedAt}, approved in ${timeToApproval} seconds, merged in ${timeToMerge} seconds`
+        );
       } else {
-        console.log(`PR #${pr.number}: Opened at ${times.openedAt}, no approval found, merged at ${times.mergedAt}`);
+        console.log(
+          `PR #${pr.number}: Opened at ${times.openedAt}, no approval found, merged at ${times.mergedAt}`
+        );
       }
     }
   } catch (error) {
