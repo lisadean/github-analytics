@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/lisadean/github-analytics/issues"
   },
-  "homepage": "https://github.com/lisadean/github-analytics#readme"
+  "homepage": "https://github.com/lisadean/github-analytics#readme",
+  "dependencies": {
+    "@octokit/rest": "^19.0.7"
+  }
 }
