@@ -6,6 +6,18 @@ const maxPRs = 5;
 const owner = 'buildcom';
 const repo = 'react-build-store';
 
+function addAggregatedData(aggregatedData, sizeLabel, timeToApproval) {
+  if (!aggregatedData[sizeLabel]) {
+    aggregatedData[sizeLabel] = {
+      count: 0,
+      totalTime: 0,
+    };
+  }
+
+  aggregatedData[sizeLabel].count++;
+  aggregatedData[sizeLabel].totalTime += timeToApproval;
+}
+
 function formatShortDate(date) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -95,6 +107,7 @@ async function getPRReviewTimes(owner, repo, pr) {
 (async function main() {
   try {
     const mergedPRs = await getMergedPRs(owner, repo);
+    const aggregatedData = {};
 
     for (const pr of mergedPRs) {
       const times = await getPRReviewTimes(owner, repo, pr);
@@ -102,6 +115,7 @@ async function getPRReviewTimes(owner, repo, pr) {
       const sizeLabel = pr.labels.find((label) =>
         label.name.toLowerCase().startsWith('size')
       );
+      const sizeLabelName = sizeLabel ? sizeLabel.name : 'no size label';
       const sizeLabelInfo = sizeLabel ? `, size label: ${sizeLabel.name}` : '';
 
       if (times.approvedAt) {
@@ -114,9 +128,19 @@ async function getPRReviewTimes(owner, repo, pr) {
             timeToApproval
           )}, merged in ${formatDuration(timeToMerge)}${sizeLabelInfo}`
         );
+
+        addAggregatedData(aggregatedData, sizeLabelName, timeToApproval);
       } else {
-        console.log(`PR ${pr.number}: no approval found`);
+        console.log(`PR ${pr.number}: no approval found${sizeLabelInfo}`);
       }
+    }
+
+    // Calculate and display the average approval times
+    console.log('\nAverage time to approve PRs by size label:');
+    for (const sizeLabel in aggregatedData) {
+      const averageTime =
+        aggregatedData[sizeLabel].totalTime / aggregatedData[sizeLabel].count;
+      console.log(`${sizeLabel}: ${formatDuration(averageTime)}`);
     }
   } catch (error) {
     console.error('Error in main function:', error);
