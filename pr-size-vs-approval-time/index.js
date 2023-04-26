@@ -1,10 +1,35 @@
 const { Octokit } = require('@octokit/rest');
 const octokit = new Octokit({ auth: process.env.NPM_TOKEN });
 
-const maxPRs = 20;
+const maxPRs = 5;
 
 const owner = 'buildcom';
 const repo = 'react-build-store';
+
+function formatShortDate(date) {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${month}/${day}/${year}`;
+}
+
+function formatDuration(seconds) {
+  const days = Math.floor(seconds / 86400);
+  seconds %= 86400;
+  const hours = Math.floor(seconds / 3600);
+  seconds %= 3600;
+  const minutes = Math.floor(seconds / 60);
+  seconds %= 60;
+
+  let durationString = '';
+  if (days) durationString += `${days}d `;
+  if (hours) durationString += `${hours}h `;
+  if (minutes) durationString += `${minutes}m `;
+  if (seconds) durationString += `${seconds}s`;
+
+  return durationString;
+}
 
 async function getMergedPRs(owner, repo) {
   try {
@@ -18,7 +43,7 @@ async function getMergedPRs(owner, repo) {
         state: 'closed',
         sort: 'updated',
         direction: 'desc',
-        per_page: 100,
+        per_page: maxPRs < 100 ? maxPRs : 100,
         page,
       });
 
@@ -77,11 +102,16 @@ async function getPRReviewTimes(owner, repo, pr) {
         const timeToApproval = (times.approvedAt - times.openedAt) / 1000;
         const timeToMerge = (times.mergedAt - times.approvedAt) / 1000;
         console.log(
-          `PR #${pr.number}: Opened at ${times.openedAt}, approved in ${timeToApproval} seconds, merged in ${timeToMerge} seconds`
+          `PR ${pr.number}: opened ${formatShortDate(
+            times.openedAt
+          )}, approved in ${formatDuration(
+            timeToApproval
+          )}, merged in ${formatDuration(timeToMerge)}`
         );
       } else {
         console.log(
-          `PR #${pr.number}: Opened at ${times.openedAt}, no approval found, merged at ${times.mergedAt}`
+          `PR ${pr.number}: no approval found`
+          // `PR ${pr.number}: Opened at ${formatShortDate(times.openedAt)}, no approval found, merged at ${times.mergedAt}`
         );
       }
     }
