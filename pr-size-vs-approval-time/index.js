@@ -98,6 +98,12 @@ async function getPRReviewTimes(owner, repo, pr) {
 
     for (const pr of mergedPRs) {
       const times = await getPRReviewTimes(owner, repo, pr);
+
+      const sizeLabel = pr.labels.find((label) =>
+        label.name.toLowerCase().startsWith('size')
+      );
+      const sizeLabelInfo = sizeLabel ? `, size label: ${sizeLabel.name}` : '';
+
       if (times.approvedAt) {
         const timeToApproval = (times.approvedAt - times.openedAt) / 1000;
         const timeToMerge = (times.mergedAt - times.approvedAt) / 1000;
@@ -106,13 +112,10 @@ async function getPRReviewTimes(owner, repo, pr) {
             times.openedAt
           )}, approved in ${formatDuration(
             timeToApproval
-          )}, merged in ${formatDuration(timeToMerge)}`
+          )}, merged in ${formatDuration(timeToMerge)}${sizeLabelInfo}`
         );
       } else {
-        console.log(
-          `PR ${pr.number}: no approval found`
-          // `PR ${pr.number}: Opened at ${formatShortDate(times.openedAt)}, no approval found, merged at ${times.mergedAt}`
-        );
+        console.log(`PR ${pr.number}: no approval found`);
       }
     }
   } catch (error) {
