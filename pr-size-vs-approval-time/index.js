@@ -47,6 +47,8 @@ async function getMergedPRs(owner, repo) {
   try {
     const mergedPRs = [];
     let page = 1;
+    const oneYearAgo = new Date();
+    oneYearAgo.setDate(oneYearAgo.getDate() - 365);
 
     while (mergedPRs.length < maxPRs) {
       const { data: pullRequests } = await octokit.pulls.list({
@@ -64,7 +66,8 @@ async function getMergedPRs(owner, repo) {
       }
 
       for (const pr of pullRequests) {
-        if (pr.merged_at) {
+        const mergedAt = new Date(pr.merged_at);
+        if (pr.merged_at && mergedAt >= oneYearAgo) {
           mergedPRs.push(pr);
         }
       }
