@@ -80,18 +80,34 @@ async function getMergedPRs(owner, repo) {
 
 async function getPRReviewTimes(owner, repo, pr) {
   try {
-    const { data: reviews } = await octokit.pulls.listReviews({
-      owner,
-      repo,
-      pull_number: pr.number,
-    });
-
     let approvedAt = null;
-    for (const review of reviews.reverse()) {
-      if (review.state === 'APPROVED') {
-        if (!approvedAt || new Date(review.submitted_at) > approvedAt) {
-          approvedAt = new Date(review.submitted_at);
+    let page = 1;
+
+    while (true) {
+      const { data: reviews } = await octokit.pulls.listReviews({
+        owner,
+        repo,
+        pull_number: pr.number,
+        per_page: 100,
+        page,
+      });
+
+      if (reviews.length === 0) {
+        break;
+      }
+
+      for (const review of reviews.reverse()) {
+        if (review.state === 'APPROVED') {
+          if (!approvedAt || new Date(review.submitted_at) > approvedAt) {
+            approvedAt = new Date(review.submitted_at);
+          }
         }
+      }
+
+      if (reviews.length < 100) {
+        break;
+      } else {
+        page++;
       }
     }
 
