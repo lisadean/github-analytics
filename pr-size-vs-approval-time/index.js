@@ -1,7 +1,7 @@
 const { Octokit } = require('@octokit/rest');
 const octokit = new Octokit({ auth: process.env.NPM_TOKEN });
 
-const maxPRs = 5;
+const maxPRs = process.argv[2] || 100;
 
 const owner = 'buildcom';
 const repo = 'react-build-store';
@@ -87,16 +87,17 @@ async function getPRReviewTimes(owner, repo, pr) {
     });
 
     let approvedAt = null;
-    for (const review of reviews) {
+    for (const review of reviews.reverse()) {
       if (review.state === 'APPROVED') {
-        approvedAt = review.submitted_at;
-        break;
+        if (!approvedAt || new Date(review.submitted_at) > approvedAt) {
+          approvedAt = new Date(review.submitted_at);
+        }
       }
     }
 
     return {
       openedAt: new Date(pr.created_at),
-      approvedAt: approvedAt ? new Date(approvedAt) : null,
+      approvedAt,
       mergedAt: new Date(pr.merged_at),
     };
   } catch (error) {
