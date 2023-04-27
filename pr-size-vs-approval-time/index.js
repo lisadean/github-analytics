@@ -204,7 +204,7 @@ async function getPRReviewTimes(owner, repo, pr) {
 
     const summaryDataObject = Object.fromEntries(summaryData);
     console.log('\nAverage time to approve PRs by size label:');
-    console.table(summaryDataObject, ['Size Label', 'Count', 'Average Time']);
+    console.table(summaryDataObject, ['Count', 'Average Time']);
   } catch (error) {
     console.error('Error in main function:', error);
   }
