@@ -128,8 +128,9 @@ async function getPRReviewTimes(owner, repo, pr) {
   try {
     const mergedPRs = await getMergedPRs(owner, repo);
     const aggregatedData = {};
-    const prDataArray = []; // Create an array to store individual PR data
+    const prDataArray = [];
 
+    console.log('Processing merged PRs...');
     for (const pr of mergedPRs) {
       const times = await getPRReviewTimes(owner, repo, pr);
 
@@ -142,33 +143,41 @@ async function getPRReviewTimes(owner, repo, pr) {
         const timeToApproval = (times.approvedAt - times.openedAt) / 1000;
         const timeToMerge = (times.mergedAt - times.approvedAt) / 1000;
 
-        // Add individual PR data to prDataArray
-        prDataArray.push({
-          'PR Number': pr.number,
-          Opened: formatShortDate(times.openedAt),
-          'Approved in': formatDuration(timeToApproval),
-          'Merged in': formatDuration(timeToMerge),
-          'Size Label': sizeLabelName,
-        });
+        prDataArray.push([
+          [pr.number],
+          {
+            Opened: formatShortDate(times.openedAt),
+            'Approved in': formatDuration(timeToApproval),
+            'Merged in': formatDuration(timeToMerge),
+            'Size Label': sizeLabelName,
+          },
+        ]);
 
         addAggregatedData(aggregatedData, sizeLabelName, timeToApproval);
       } else {
-        // Add individual PR data to prDataArray with no approval
-        prDataArray.push({
-          'PR Number': pr.number,
-          Opened: formatShortDate(times.openedAt),
-          'Approved in': 'No approval found',
-          'Merged in': '',
-          'Size Label': sizeLabelName,
-        });
+        prDataArray.push([
+          [pr.number],
+          {
+            Opened: formatShortDate(times.openedAt),
+            'Approved in': 'No approval found',
+            'Merged in': '',
+            'Size Label': sizeLabelName,
+          },
+        ]);
       }
+      process.stdout.write('.');
     }
 
-    // Display individual PR data as a table
+    const prDataArrayObject = Object.fromEntries(prDataArray);
+    console.log(`\nTotal PRs: ${mergedPRs.length}`);
     console.log('\nIndividual PR data:');
-    console.table(prDataArray);
+    console.table(prDataArrayObject, [
+      'Opened',
+      'Approved in',
+      'Merged in',
+      'Size Label',
+    ]);
 
-    // Convert the aggregatedData object to an array and sort it
     const sortOrder = [
       'size/XS',
       'size/S',
@@ -181,25 +190,21 @@ async function getPRReviewTimes(owner, repo, pr) {
       ([a], [b]) => sortOrder.indexOf(a) - sortOrder.indexOf(b)
     );
 
-    // Calculate the average approval times and store them in an array of objects
     const summaryData = sortedData.map(([sizeLabel, data]) => {
       const averageTime = data.totalTime / data.count;
       return [
         sizeLabel,
         {
           'Size Label': sizeLabel,
-          Count: data.count, // Add the count of each label
+          Count: data.count,
           'Average Time': formatDuration(averageTime),
         },
       ];
     });
 
-    // Convert the summaryData array to an object
     const summaryDataObject = Object.fromEntries(summaryData);
-
-    // Display the average approval times in a table format without the index column
     console.log('\nAverage time to approve PRs by size label:');
-    console.table(summaryDataObject, ['Size Label', 'Count', 'Average Time']); // Add 'Count' to the displayed columns
+    console.table(summaryDataObject, ['Size Label', 'Count', 'Average Time']);
   } catch (error) {
     console.error('Error in main function:', error);
   }
