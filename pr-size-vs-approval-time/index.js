@@ -35,10 +35,10 @@ function formatDuration(seconds) {
   seconds %= 60;
 
   let durationString = '';
-  if (days) durationString += `${days}d `;
-  if (hours) durationString += `${hours}h `;
-  if (minutes) durationString += `${minutes}m `;
-  if (seconds) durationString += `${seconds}s`;
+  if (days) durationString += `${Math.round(days)}d `;
+  if (hours) durationString += `${Math.round(hours)}h `;
+  if (minutes) durationString += `${Math.round(minutes)}m `;
+  if (seconds) durationString += `${Math.round(seconds)}s`;
 
   return durationString;
 }
@@ -152,11 +152,23 @@ async function getPRReviewTimes(owner, repo, pr) {
       }
     }
 
+    // Convert the aggregatedData object to an array and sort it
+    const sortOrder = [
+      'size/XS',
+      'size/S',
+      'size/M',
+      'size/L',
+      'size/XL',
+      'size/XXL',
+    ];
+    const sortedData = Object.entries(aggregatedData).sort(
+      ([a], [b]) => sortOrder.indexOf(a) - sortOrder.indexOf(b)
+    );
+
     // Calculate and display the average approval times
     console.log('\nAverage time to approve PRs by size label:');
-    for (const sizeLabel in aggregatedData) {
-      const averageTime =
-        aggregatedData[sizeLabel].totalTime / aggregatedData[sizeLabel].count;
+    for (const [sizeLabel, data] of sortedData) {
+      const averageTime = data.totalTime / data.count;
       console.log(`${sizeLabel}: ${formatDuration(averageTime)}`);
     }
   } catch (error) {
