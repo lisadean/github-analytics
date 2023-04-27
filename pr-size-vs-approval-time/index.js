@@ -165,12 +165,24 @@ async function getPRReviewTimes(owner, repo, pr) {
       ([a], [b]) => sortOrder.indexOf(a) - sortOrder.indexOf(b)
     );
 
-    // Calculate and display the average approval times
-    console.log('\nAverage time to approve PRs by size label:');
-    for (const [sizeLabel, data] of sortedData) {
+    // Calculate the average approval times and store them in an array of objects
+    const summaryData = sortedData.map(([sizeLabel, data]) => {
       const averageTime = data.totalTime / data.count;
-      console.log(`${sizeLabel}: ${formatDuration(averageTime)}`);
-    }
+      return [
+        sizeLabel,
+        {
+          'Size Label': sizeLabel,
+          'Average Time': formatDuration(averageTime),
+        },
+      ];
+    });
+
+    // Convert the summaryData array to an object
+    const summaryDataObject = Object.fromEntries(summaryData);
+
+    // Display the average approval times in a table format without the index column
+    console.log('\nAverage time to approve PRs by size label:');
+    console.table(summaryDataObject, ['Average Time']);
   } catch (error) {
     console.error('Error in main function:', error);
   }
