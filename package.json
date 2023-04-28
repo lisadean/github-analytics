@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/lisadean/github-analytics#readme",
   "dependencies": {
+    "@octokit/graphql": "^5.0.5",
     "@octokit/rest": "^19.0.7"
   }
 }
