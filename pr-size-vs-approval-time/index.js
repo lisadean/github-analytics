@@ -1,10 +1,21 @@
 const { Octokit } = require('@octokit/rest');
+const { graphql } = require('@octokit/graphql');
+
 const octokit = new Octokit({ auth: process.env.NPM_TOKEN });
 
 const maxPRs = process.argv[2] || 100;
 
 const owner = 'buildcom';
 const repo = 'react-build-store';
+const graphqlWithAuth = graphql.defaults({
+  headers: {
+    authorization: `token ${process.env.NPM_TOKEN}`,
+  },
+});
+
+// TODO: copypasta GPT's changes and review -- pretty sure it's way offbase on it's last iteration -- it
+// will try to get all PRs instead of stopping at the maxPRs limit. But, I may be able to filter on
+// updated_at through the edges property
 
 function addAggregatedData(aggregatedData, sizeLabel, timeToApproval) {
   if (!aggregatedData[sizeLabel]) {
